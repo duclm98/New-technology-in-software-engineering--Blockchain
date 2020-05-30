@@ -1,2 +1,51 @@
-<h1>{{title}}</h1>
-<p>Welcome to {{title}}</p>
+<div class="container">
+    <div class="row" style="padding-top: 50px;">
+        <div class="col-sm-3">
+            <ul class="list-group">
+                <li class="list-group-item active">Danh sách ví</li>
+                <form class="form-inline" method="post" action="/wallets">
+                    <div class="form-group" style="width: 70%;">
+                        <input type="text" name="wallet" class="form-control" placeholder="Tên ví"
+                            style="width: fit-content;">
+                    </div>
+                    <button type="submit" class="btn btn-success" style="width: 30%;">Tạo ví</button>
+                </form>
+                {{#if wallets}}
+                {{#each wallets}}
+                <li class="list-group-item">{{this}}</li>
+                {{/each}}
+                {{/if}}
+            </ul>
+        </div>
+        <div class="col-sm-3">
+            <div>
+                <li class="list-group-item active">Tạo giao dịch</li>
+                <form class="form" method="post" action="/wallets">
+                    <div class="form-group" style="width: 100%;">
+                        <select class="custom-select" name="sender">
+                            <option selected>Ví gửi</option>
+                            {{#if wallets}}
+                            {{#each wallets}}
+                            <option value="{{this}}">{{this}}</option>
+                            {{/each}}
+                            {{/if}}
+                        </select>
+                        <select class="custom-select" name="receiver">
+                            <option selected>Ví nhận</option>
+                            {{#if wallets}}
+                            {{#each wallets}}
+                            <option value="{{this}}">{{this}}</option>
+                            {{/each}}
+                            {{/if}}
+                        </select>
+                        <input type="number" name="money" name="wallet" class="form-control" placeholder="Số tiền">
+                    </div>
+                    <button type="submit" class="btn btn-success" style="width: 100%;">Tạo giao dịch</button>
+                </form>
+            </div>
+            <div style="padding-top: 20px;">
+                <li class="list-group-item active">Danh sách giao dịch</li>
+            </div>
+        </div>
+    </div>
+</div>

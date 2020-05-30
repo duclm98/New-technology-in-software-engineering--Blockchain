@@ -5,18 +5,6 @@ const logger = require('morgan');
 const momentTZ = require('moment-timezone');
 const crypto = require('crypto');
 
-const app = express();
-
-// view engine setup
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'hbs');
-
-app.use(logger('dev'));
-app.use(express.json());
-app.use(express.urlencoded({
-  extended: false
-}));
-
 // === CLASS MÔ TẢ CẤU TRÚC 1 GIAO DỊCH ===
 class transaction {
   constructor(sender, receiver, value) {
@@ -56,7 +44,7 @@ class block {
 class blockchain {
   constructor() {
     this.chain = [];
-    this.difficulty = 1;
+    this.difficulty = 5;
     this.chain.push(new block(0, [], '0'));
     this.suspendedTransaction = []; //Là mảng các giao dịch mới thêm vào mảng Blockchain và chưa được Hash xong.
     this.bonus = 1000; //Là phần thưởng dành cho các miner (người đào hash) cho việc thêm mới thành công mảng GiaoDichTamHoan vào Blockchain.
@@ -107,28 +95,100 @@ class blockchain {
   }
 }
 
+const app = express();
+
+// view engine setup
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'hbs');
+
+app.use(logger('dev'));
+app.use(express.json());
+app.use(express.urlencoded({
+  extended: false
+}));
+
 const MyCoin = new blockchain();
+const wallets = ['A', 'B', 'C'];
 
-MyCoin.createTransaction(new transaction('A', 'B', 5000));
-MyCoin.createTransaction(new transaction('B', 'C', 3000));
+app.get('/', (req, res) => {
+  res.render('index', {
+    wallets
+  });
+})
 
-console.log("Bắt đầu đào tiền ảo...");
+app.route('/wallets')
+  .post((req, res) => {
+    const wallet = req.body.wallet;
 
-console.log("Lần 1");
-MyCoin.mineEmoney('vi');
-console.log(JSON.stringify(MyCoin, true, 2));
-console.log("Số tiền trong ví: " + MyCoin.checkMoneyInWallet("vi"));
+    if (wallet === '') {
+      return res.render('index', {
+        msg: 'Tên ví không được trống.',
+        wallets
+      });
+    }
 
+    if(wallets.includes(wallet)){
+      return res.render('index', {
+        msg: 'Tên ví đã tồn tại.',
+        wallets
+      });
+    }
 
-console.log("Lần 2");
-MyCoin.mineEmoney('vi');
-console.log(JSON.stringify(MyCoin, true, 2));
-console.log("Số tiền trong ví: " + MyCoin.checkMoneyInWallet("vi"));
+    wallets.push(wallet);
+    return res.render('index', {
+      msg: 'Tạo ví thành công.',
+      wallets
+    });
+  })
+  .get((req, res) => {
+    res.send({
+      wallets
+    })
+  });
 
-console.log("Lần 3");
-MyCoin.mineEmoney('vi');
-console.log(JSON.stringify(MyCoin, true, 2));
-console.log("Số tiền trong ví: " + MyCoin.checkMoneyInWallet("vi"));
+app.route('/transaction')
+  .get((req, res) => {
+    res.send(MyCoin);
+  })
+  .post((req, res) => {
+    const sender = req.body.sender,
+      receiver = req.body.receiver,
+      money = req.body.money;
+
+    if (!wallets.includes(sender)) {
+      return res.status(400).send('Ví gửi tiền không tồn tại.');
+    }
+    if (!wallets.includes(receiver)) {
+      return res.status(400).send('Ví nhận tiền không tồn tại.');
+    }
+
+    MyCoin.createTransaction(new transaction(sender, receiver, money));
+    res.send('Tạo giao dịch thành công.');
+  });
+
+app.post('/mine/:wallet', (req, res) => {
+  const wallet = req.params.wallet;
+  if (!wallets.includes(wallet)) {
+    return res.status(400).send('Ví của bạn không tồn tại.');
+  }
+
+  console.log("Bắt đầu đào tiền ảo...");
+  MyCoin.mineEmoney(wallet);
+  res.send({
+    msg: 'Đào tiền ảo thành công.',
+    moneyInWallet: MyCoin.checkMoneyInWallet(wallet)
+  });
+})
+
+app.get('/money/:wallet', (req, res) => {
+  const wallet = req.params.wallet;
+  if (!wallets.includes(wallet)) {
+    return res.status(400).send('Ví của bạn không tồn tại.');
+  }
+  res.send({
+    moneyInWallet: MyCoin.checkMoneyInWallet(wallet)
+  });
+})
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
