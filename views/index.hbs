@@ -2,33 +2,17 @@
     <div class="row" style="padding-top: 50px;">
         <div class="col-sm-3">
             <ul class="list-group">
-                <li class="list-group-item active">Danh sách ví</li>
-                <form class="form-inline" method="post" action="/wallets">
-                    <div class="form-group" style="width: 70%;">
-                        <input type="text" name="wallet" class="form-control" placeholder="Tên ví"
-                            style="width: fit-content;">
-                    </div>
-                    <button type="submit" class="btn btn-success" style="width: 30%;">Tạo ví</button>
-                </form>
-                {{#if wallets}}
-                {{#each wallets}}
-                <li class="list-group-item">{{this}}</li>
-                {{/each}}
-                {{/if}}
+                <li class="list-group-item active">Số tiền bạn có trong ví: {{moneyInWallet}}</li>
             </ul>
         </div>
         <div class="col-sm-3">
             <div>
                 <li class="list-group-item active">Tạo giao dịch</li>
-                <form class="form" method="post" action="/wallets">
+                <form class="form" method="post" action="/transaction">
                     <div class="form-group" style="width: 100%;">
                         <select class="custom-select" name="sender">
-                            <option selected>Ví gửi</option>
-                            {{#if wallets}}
-                            {{#each wallets}}
-                            <option value="{{this}}">{{this}}</option>
-                            {{/each}}
-                            {{/if}}
+                            <option value="{{walletName}}" selected>Ví gửi</option>
+                            <option value="{{walletName}}">{{walletName}}</option>
                         </select>
                         <select class="custom-select" name="receiver">
                             <option selected>Ví nhận</option>
@@ -44,7 +28,28 @@
                 </form>
             </div>
             <div style="padding-top: 20px;">
+                <li class="list-group-item active">Danh sách giao dịch tạm hoãn</li>
+                {{#if suspendedTransactions}}
+                {{#each suspendedTransactions}}
+                <li class="list-group-item">{{this}}</li>
+                {{/each}}
+                {{/if}}
+            </div>
+        </div>
+        <div class="col-sm-3">
+            <div>
+                <li class="list-group-item active">Xác nhận giao dịch</li>
+                <form class="form" method="post" action="/mine/{{walletName}}">
+                    <button type="submit" class="btn btn-success" style="width: 100%;">Bắt đầu đào tiền ảo</button>
+                </form>
+            </div>
+            <div style="padding-top: 20px;">
                 <li class="list-group-item active">Danh sách giao dịch</li>
+                {{#if transactions}}
+                {{#each transactions}}
+                <li class="list-group-item">{{this}}</li>
+                {{/each}}
+                {{/if}}
             </div>
         </div>
     </div>

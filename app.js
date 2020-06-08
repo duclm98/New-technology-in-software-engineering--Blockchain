@@ -4,6 +4,7 @@ const path = require('path');
 const logger = require('morgan');
 const momentTZ = require('moment-timezone');
 const crypto = require('crypto');
+const cookieParser = require('cookie-parser');
 
 // === CLASS MÔ TẢ CẤU TRÚC 1 GIAO DỊCH ===
 class transaction {
@@ -106,14 +107,31 @@ app.use(express.json());
 app.use(express.urlencoded({
   extended: false
 }));
+app.use(cookieParser());
 
-const MyCoin = new blockchain();
-const wallets = ['A', 'B', 'C'];
+let MyCoin = new blockchain();
+let wallets = ['A', 'B', 'C'];
+
+app.post('/login', (req, res) => {
+  const wallet = req.body.wallet;
+  const password = req.body.password;
+  if (wallets.includes(wallet) && password === '12345') {
+    res.cookie("wallet", wallet);
+    res.redirect('/');
+  }
+})
 
 app.get('/', (req, res) => {
-  res.render('index', {
-    wallets
-  });
+  if (req.cookies.wallet) {
+    const transactions = MyCoin;
+    res.render('index', {
+      wallets,
+      transactions,
+      walletName: req.cookies.wallet
+    });
+  } else {
+    res.render('login');
+  }
 })
 
 app.route('/wallets')
@@ -127,7 +145,7 @@ app.route('/wallets')
       });
     }
 
-    if(wallets.includes(wallet)){
+    if (wallets.includes(wallet)) {
       return res.render('index', {
         msg: 'Tên ví đã tồn tại.',
         wallets
@@ -163,7 +181,12 @@ app.route('/transaction')
     }
 
     MyCoin.createTransaction(new transaction(sender, receiver, money));
-    res.send('Tạo giao dịch thành công.');
+    const suspendedTransactions = MyCoin.suspendedTransaction.map(i => `Bên gửi: ${i.sender}, bên nhận: ${i.receiver}`);
+    return res.render('index', {
+      msg: 'Tạo giao dịch thành công.',
+      wallets,
+      suspendedTransactions
+    });
   });
 
 app.post('/mine/:wallet', (req, res) => {
@@ -174,6 +197,9 @@ app.post('/mine/:wallet', (req, res) => {
 
   console.log("Bắt đầu đào tiền ảo...");
   MyCoin.mineEmoney(wallet);
+  const chainLength = MyCoin.chain.length;
+  const transactions = JSON.stringify(MyCoin.chain, true, 2)
+  console.log(transactions)
   res.send({
     msg: 'Đào tiền ảo thành công.',
     moneyInWallet: MyCoin.checkMoneyInWallet(wallet)
